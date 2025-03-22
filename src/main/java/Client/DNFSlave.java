@@ -27,6 +27,7 @@ public class DNFSlave {
         Properties properties = new Properties();
         try {
             properties.load(new FileInputStream("config.properties"));
+            //properties.load(DNFSlave.class.getClassLoader().getResourceAsStream("config.properties"));
         } catch (IOException e) {
             e.printStackTrace();
             logger.error("配置文件错误");
