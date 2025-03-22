@@ -19,6 +19,10 @@ public class MouseEventHooker extends EventHooker implements Runnable{
     private final static int WM_RBUTTONUP=0x0205;
     private final static int WM_MOUSEWHEEL=0x020A;
 
+    //上一次的鼠标位置
+    private int lastMouseX = -1;
+    private int lastMouseY = -1;
+
 
     public MouseEventHooker(DefaultMQProducer producer, String topicName){
         super(producer,topicName);
@@ -84,6 +88,18 @@ public class MouseEventHooker extends EventHooker implements Runnable{
                         mouseMessage.setX(lparam.pt.x);
                         mouseMessage.setY(lparam.pt.y);
                         tag="MouseMove";
+
+                        //发送相对移动量
+                        if (lastMouseX != -1 && lastMouseY != -1) {
+                            int dx = lparam.pt.x - lastMouseX;
+                            int dy = lparam.pt.y - lastMouseY;
+                            logger.debug("{} x = {}; y = {} dx = {}; dy = {}", tag, mouseMessage.getX(), mouseMessage.getY(), dx, dy);
+                            mouseMessage.setDeltaX(dx);
+                            mouseMessage.setDeltaY(dy);
+                        }
+                        lastMouseX = lparam.pt.x;
+                        lastMouseY = lparam.pt.y;
+
                         break;
                     }
                     case WM_MOUSEWHEEL:{

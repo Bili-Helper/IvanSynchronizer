@@ -70,7 +70,31 @@ public class MouseMessageConsumer implements Runnable{
                     MouseMessage mouseMessage = objectMapper.readValue(body, MouseMessage.class);
                     Integer eventCode = mouseMessage.getEventCode();
                     switch (eventCode){
-                        case MouseEventCodes.MOUSEEVENTF_MOVE:
+                        case MouseEventCodes.MOUSEEVENTF_MOVE:{
+                            WinUser.INPUT[] inputs = (WinUser.INPUT[]) new WinUser.INPUT().toArray(1);
+                            inputs[0].type = new WinDef.DWORD(WinUser.INPUT.INPUT_MOUSE);
+                            inputs[0].input.setType("mi");
+                            Integer deltaX = mouseMessage.getDeltaX();
+                            Integer deltaY = mouseMessage.getDeltaY();
+
+                            if (deltaX != null && deltaY != null) {
+                                // 设置为相对移动模式，不添加MOUSEEVENTF_ABSOLUTE标志
+                                inputs[0].input.mi.dx = new WinDef.LONG(deltaX);
+                                inputs[0].input.mi.dy = new WinDef.LONG(deltaY);
+                                inputs[0].input.mi.dwFlags = new WinDef.DWORD(eventCode);
+                            } else {
+                                Integer x = mouseMessage.getX();
+                                Integer y = mouseMessage.getY();
+                                user32.SetCursorPos(x, y); // 设置鼠标坐标到屏幕对应位置
+                                inputs[0].input.mi.dwFlags = new WinDef.DWORD(eventCode);
+
+                            }
+
+                            user32.SendInput(new WinDef.DWORD(1), inputs, inputs[0].size());
+                            break;
+
+
+                        }
                         case MouseEventCodes.MOUSEEVENTF_LEFTDOWN:
                         case MouseEventCodes.MOUSEEVENTF_LEFTUP:
                         case MouseEventCodes.MOUSEEVENTF_RIGHTDOWN:
