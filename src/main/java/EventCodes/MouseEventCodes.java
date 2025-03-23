@@ -11,5 +11,7 @@ public interface MouseEventCodes {
     public final static int MOUSEEVENTF_WHEEL=0x0800;
     public final static int MOUSEEVENTF_ABSOLUTE=0x8000;
     public final static int MOUSEEVENTF_VIRTUALDESK=0x4000;
+    public final static int MOUSEEVENTF_MIDDLEDOWN=0x0020;
+    public final static int MOUSEEVENTF_MIDDLEUP=0x0040;
 
 }

@@ -7,7 +7,7 @@ public class MouseMessage extends EventMessage{
     private Integer deltaX; // 相对X移动量
     private Integer deltaY; // 相对Y移动量
     private Integer wheelDelta; // 滚轮移动量
-    private Boolean isRelativeMode; // 是否为相对模式（游戏模式）
+    private Boolean isRelativeMode;// 是否为相对模式（游戏模式）
 
 
     public MouseMessage() {
@@ -60,7 +60,7 @@ public class MouseMessage extends EventMessage{
         return wheelDelta;
     }
 
-    public void setWheelDelta(Integer wheelDelta) {
+    public void setDeltaWheel(Integer wheelDelta) {
         this.wheelDelta = wheelDelta;
     }
 
@@ -72,4 +72,16 @@ public class MouseMessage extends EventMessage{
         isRelativeMode = relativeMode;
     }
 
+    public void setTimeStamp(long l) {
+        
+    }
+
+    public void setCode(int mouseeventfMove) {
+    }
+
+    public void setXAxis(int value) {
+    }
+
+    public void setYAxis(int i) {
+    }
 }
