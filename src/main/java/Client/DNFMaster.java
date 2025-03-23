@@ -49,8 +49,13 @@ public class DNFMaster {
         // 初始化鼠标生产者
         DefaultMQProducer mouseProducer = new DefaultMQProducer("MasterMouse");
         mouseProducer.setNamesrvAddr(nameServerAddr);
-        mouseProducer.start();
-
+        try {
+            mouseProducer.start();
+            logger.info("鼠标生产者已启动");
+        } catch (MQClientException e) {
+            logger.error("鼠标生产者启动失败", e);
+            return;
+        }
         // 使用 RawMouseInputJInput 替代 MouseEventHooker
         rawMouseInputJInput = new RawMouseInputJInput(mouseProducer, mouseTopicName);
         Thread rawMouseThread = new Thread(rawMouseInputJInput);
@@ -102,6 +107,13 @@ public class DNFMaster {
             e.printStackTrace();
         }
 
+        // 阻塞主线程
+        try {
+            rawMouseThread.join();
+        } catch (InterruptedException e) {
+            logger.error("主线程被中断", e);
+        }
+
         // 添加钩子以确保程序退出时关闭资源
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             if (rawMouseInputJInput != null) {
@@ -124,4 +136,5 @@ public class DNFMaster {
             logger.info("所有资源已关闭");
         }));
     }
+
 }

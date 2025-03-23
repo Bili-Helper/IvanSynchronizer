@@ -83,7 +83,7 @@ public class RawMouseInputJInput implements Runnable {
 
             // 添加小延迟避免CPU过载
             try {
-                Thread.sleep(1);
+                Thread.sleep(0);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
@@ -93,67 +93,35 @@ public class RawMouseInputJInput implements Runnable {
 
     private void processEvent(Event event) {
         Component component = event.getComponent();
-        String compName = component.getName();
         float value = event.getValue();
-
-        // 添加更详细的日志来调试
-        logger.debug("处理事件: 组件={}, 值={}", compName, value);
 
         MouseMessage mouseMessage = new MouseMessage();
         String tag = "";
 
-
-        if (compName.equals("x") || compName.equals("X Axis")) {
-            // X轴移动
-            MouseMessage message = new MouseMessage();
-            message.setTimeStamp(System.currentTimeMillis());
-            message.setCode(MouseEventCodes.MOUSEEVENTF_MOVE);
-            message.setXAxis((int)value);
-            message.setYAxis(0);
-
-            logger.info("鼠标X轴移动: {}", value);
-            sendRocketMQMessage(message, "MOVE");
-        }
-        else if (compName.equals("y") || compName.equals("Y Axis")) {
-            // Y轴移动
-            MouseMessage message = new MouseMessage();
-            message.setTimeStamp(System.currentTimeMillis());
-            message.setCode(MouseEventCodes.MOUSEEVENTF_MOVE);
-            message.setXAxis(0);
-            message.setYAxis((int)value);
-
-            logger.info("鼠标Y轴移动: {}", value);
-            sendRocketMQMessage(message, "MOVE");
-        }
-
-        // 处理鼠标移动事件（相对模式）
+        // 只保留相对模式处理逻辑
         if (component.isRelative()) {
+            // 处理X/Y轴移动
             if (component.getIdentifier() == Component.Identifier.Axis.X) {
-                int deltaX = Math.round(value);
-                // 过滤掉微小移动，减少消息量
-                if (deltaX != 0) {
-                    mouseMessage.setDeltaX(deltaX);
-                    mouseMessage.setEventCode(MouseEventCodes.MOUSEEVENTF_MOVE);
-                    tag = "RawMouseMove";
-                    logger.debug("鼠标X轴移动: " + deltaX);
-                }
-            } else if (component.getIdentifier() == Component.Identifier.Axis.Y) {
-                int deltaY = Math.round(value);
-                if (deltaY != 0) {
-                    mouseMessage.setDeltaY(deltaY);
-                    mouseMessage.setEventCode(MouseEventCodes.MOUSEEVENTF_MOVE);
-                    tag = "RawMouseMove";
-                    logger.debug("鼠标Y轴移动: " + deltaY);
-                }
-            } else if (component.getIdentifier() == Component.Identifier.Axis.Z) {
-                // 处理滚轮事件
-                int wheelDelta = Math.round(value);
-                if (wheelDelta != 0) {
-                    mouseMessage.setDeltaWheel(wheelDelta);
-                    mouseMessage.setEventCode(MouseEventCodes.MOUSEEVENTF_WHEEL);
-                    tag = "MouseWheel";
-                    logger.debug("鼠标滚轮: " + wheelDelta);
-                }
+                int deltaX = (int) value; // 直接转换，避免过滤微小移动
+                mouseMessage.setDeltaX(deltaX);
+                mouseMessage.setEventCode(MouseEventCodes.MOUSEEVENTF_MOVE);
+                tag = "RawMouseMove";
+                logger.debug("X轴移动: {}", deltaX);
+            }
+            else if (component.getIdentifier() == Component.Identifier.Axis.Y) {
+                int deltaY = (int) value;
+                mouseMessage.setDeltaY(deltaY);
+                mouseMessage.setEventCode(MouseEventCodes.MOUSEEVENTF_MOVE);
+                tag = "RawMouseMove";
+                logger.debug("Y轴移动: {}", deltaY);
+            }
+            // 处理滚轮
+            else if (component.getIdentifier() == Component.Identifier.Axis.Z) {
+                int wheelDelta = (int) value;
+                mouseMessage.setDeltaWheel(wheelDelta);
+                mouseMessage.setEventCode(MouseEventCodes.MOUSEEVENTF_WHEEL);
+                tag = "MouseWheel";
+                logger.debug("滚轮: {}", wheelDelta);
             }
         }
         // 处理按钮事件
