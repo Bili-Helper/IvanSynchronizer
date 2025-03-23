@@ -44,6 +44,7 @@ public class MouseEventHooker extends EventHooker implements Runnable{
 
     }
 
+
     public MouseEventHooker(DefaultMQProducer producer, String topicName){
         super(producer,topicName);
     }
