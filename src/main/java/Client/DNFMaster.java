@@ -80,7 +80,8 @@ public class DNFMaster {
                     String tags = msg.getTags();
                     if(tags.equals("enable")){
                         enableRun=true;
-                        logger.info("开启同步");
+                        mouseEventHooker.setGameMode(true);
+                        logger.info("开启游戏模式同步");
                     }else {
                         enableRun=false;
                         logger.info("关闭同步");
