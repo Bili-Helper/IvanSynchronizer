@@ -77,18 +77,17 @@ public class MouseMessageConsumer implements Runnable{
                             Integer deltaX = mouseMessage.getDeltaX();
                             Integer deltaY = mouseMessage.getDeltaY();
 
-                            if (deltaX != null && deltaY != null) {
+
                                 // 设置为相对移动模式，不添加MOUSEEVENTF_ABSOLUTE标志
                                 inputs[0].input.mi.dx = new WinDef.LONG(deltaX);
                                 inputs[0].input.mi.dy = new WinDef.LONG(deltaY);
                                 inputs[0].input.mi.dwFlags = new WinDef.DWORD(eventCode);
-                            } else {
-                                Integer x = mouseMessage.getX();
-                                Integer y = mouseMessage.getY();
+
+                                Integer x = mouseMessage.getX() + deltaX *800;
+                                Integer y = mouseMessage.getY() + deltaY *800;
                                 user32.SetCursorPos(x, y); // 设置鼠标坐标到屏幕对应位置
                                 inputs[0].input.mi.dwFlags = new WinDef.DWORD(eventCode);
 
-                            }
 
                             user32.SendInput(new WinDef.DWORD(1), inputs, inputs[0].size());
                             break;

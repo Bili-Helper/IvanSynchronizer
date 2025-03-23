@@ -26,6 +26,11 @@ public class MouseEventHooker extends EventHooker implements Runnable{
     private boolean gameMode = false;
     private int screenCenterX = -1;
     private int screenCenterY = -1;
+    // 添加变量记录上一次的移动量
+    private int previousDx = 0;
+    private int previousDy = 0;
+    private boolean isFirstMove = true;
+
 
     // 添加设置游戏模式的方法
     public void setGameMode(boolean enabled) {
@@ -102,6 +107,7 @@ public class MouseEventHooker extends EventHooker implements Runnable{
                         break;
                     }
                     //鼠标移动事件可以忽略，减少峰值流量
+
                     case WM_MOUSEMOVE:{
                         // System.out.println("鼠标移动"+ "x="+lparam.pt.x+" y="+lparam.pt.y);
                         mouseMessage.setEventCode(MouseEventCodes.MOUSEEVENTF_MOVE);
@@ -114,34 +120,50 @@ public class MouseEventHooker extends EventHooker implements Runnable{
                             int dx = lparam.pt.x - lastMouseX;
                             int dy = lparam.pt.y - lastMouseY;
 
-                            // 游戏模式下检测鼠标是否被重置到屏幕中心
-                            if (gameMode && screenCenterX != -1) {
-                                // 如果当前坐标接近中心点，可能是游戏重置了鼠标位置
-                                if (Math.abs(lparam.pt.x - screenCenterX) < 5 && Math.abs(lparam.pt.y - screenCenterY) < 5) {
-                                    // 不计算这次移动，因为这可能是游戏重置鼠标位置造成的
-                                    logger.debug("检测到游戏重置鼠标位置到中心");
-                                    mouseMessage.setIsRelativeMode(true);
+                            // 游戏模式下检测连续相反方向的移动（游戏补偿机制）
+                            if (gameMode && !isFirstMove) {
+                                // 判断当前移动是否与上一次移动是相反的（抵消操作）
+                                boolean isCompensationMove = (dx != 0 && dx == -previousDx) ||  // x方向互为相反数且不为0
+                                        (dy != 0 && dy == -previousDy) || (Math.abs(dx) > 0 && Math.abs(previousDx) > 0 && Math.abs(dx + previousDx) <= 1) ||  // x方向近似互为相反数
+                                        (Math.abs(dy) > 0 && Math.abs(previousDy) > 0 && Math.abs(dy + previousDy) <= 1);
+                                if (isCompensationMove) {
+                                    logger.debug("检测到游戏补偿操作，忽略此次移动");
+
+                                    // 忽略这次移动，不更新鼠标相对移动量
                                     mouseMessage.setDeltaX(0);
                                     mouseMessage.setDeltaY(0);
 
-                                    // 更新最后一次位置并跳过剩余处理
-                                    lastMouseX = lparam.pt.x;
-                                    lastMouseY = lparam.pt.y;
-                                    break;
-                                }
-                            }
+                                    // 重置上一次的移动记录，避免连续多次补偿的情况
+                                    previousDx = 0;
+                                    previousDy = 0;
+                                } else {
+                                    // 正常的移动，记录并发送
+                                    logger.debug("{} x = {}; y = {} dx = {}; dy = {}", tag, mouseMessage.getX(), mouseMessage.getY(), dx, dy);
+                                    mouseMessage.setDeltaX(dx);
+                                    mouseMessage.setDeltaY(dy);
 
-                            logger.debug("{} x = {}; y = {} dx = {}; dy = {}", tag, mouseMessage.getX(), mouseMessage.getY(), dx, dy);
-                            mouseMessage.setDeltaX(dx);
-                            mouseMessage.setDeltaY(dy);
-                            mouseMessage.setIsRelativeMode(gameMode);
+                                    // 记录本次移动量以供下次比较
+                                    previousDx = dx;
+                                    previousDy = dy;
+                                }
+                            } else {
+                                // 第一次移动或非游戏模式
+                                logger.debug("{} x = {}; y = {} dx = {}; dy = {}", tag, mouseMessage.getX(), mouseMessage.getY(), dx, dy);
+                                mouseMessage.setDeltaX(dx);
+                                mouseMessage.setDeltaY(dy);
+
+                                // 记录本次移动量
+                                previousDx = dx;
+                                previousDy = dy;
+                                isFirstMove = false;
+                            }
                         }
+
                         lastMouseX = lparam.pt.x;
                         lastMouseY = lparam.pt.y;
-
                         break;
-
                     }
+
                     case WM_MOUSEWHEEL:{
                         //System.out.println("滚轮");
                         /*
